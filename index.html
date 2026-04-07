@@ -1,0 +1,417 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SAW Decision Support</title>
+  <style>
+    :root {
+      --bg-0: #070711;
+      --bg-1: #101026;
+      --glass: rgba(255, 255, 255, 0.08);
+      --glass-border: rgba(255, 255, 255, 0.2);
+      --text: #eef3ff;
+      --muted: #9fb0db;
+      --primary: #7c5cff;
+      --secondary: #35d7ff;
+      --accent: #00ffc3;
+      --danger: #ff5f8f;
+      --ok: #7cf59a;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(1200px 500px at 10% -10%, rgba(124, 92, 255, 0.35), transparent 70%),
+        radial-gradient(1000px 500px at 90% -20%, rgba(53, 215, 255, 0.28), transparent 70%),
+        linear-gradient(160deg, var(--bg-0), var(--bg-1));
+      min-height: 100vh;
+    }
+
+    .container {
+      width: min(1200px, 92vw);
+      margin: 0 auto;
+      padding: 24px 0 48px;
+    }
+
+    .hero {
+      position: relative;
+      border-radius: 24px;
+      padding: 40px 28px;
+      margin-bottom: 24px;
+      background: linear-gradient(120deg, rgba(124, 92, 255, 0.22), rgba(53, 215, 255, 0.14));
+      border: 1px solid var(--glass-border);
+      box-shadow: 0 14px 45px rgba(0, 0, 0, 0.38);
+      overflow: hidden;
+      backdrop-filter: blur(10px);
+    }
+
+    .hero::after {
+      content: "";
+      position: absolute;
+      width: 280px;
+      height: 280px;
+      right: -80px;
+      top: -70px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(0, 255, 195, 0.28), transparent 68%);
+      filter: blur(10px);
+      pointer-events: none;
+    }
+
+    .hero h1 {
+      margin: 0 0 8px;
+      font-size: clamp(1.5rem, 2.5vw, 2.3rem);
+      letter-spacing: 0.3px;
+    }
+
+    .hero p {
+      margin: 0;
+      color: var(--muted);
+      max-width: 760px;
+      line-height: 1.5;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 16px;
+      margin-bottom: 16px;
+    }
+
+    .card {
+      background: var(--glass);
+      border: 1px solid var(--glass-border);
+      border-radius: 18px;
+      padding: 18px;
+      backdrop-filter: blur(8px);
+      box-shadow: 0 10px 30px rgba(9, 7, 30, 0.45);
+    }
+
+    .card h2 {
+      margin: 0 0 8px;
+      font-size: 1.05rem;
+    }
+
+    .hint {
+      margin: 0 0 12px;
+      color: var(--muted);
+      font-size: 0.9rem;
+    }
+
+    .table-wrap {
+      overflow-x: auto;
+      border-radius: 12px;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      background: rgba(5, 10, 30, 0.5);
+      scrollbar-width: thin;
+      scrollbar-color: rgba(38, 215, 165, 0.95) rgba(14, 16, 40, 0.95);
+    }
+
+    .table-wrap::-webkit-scrollbar {
+      height: 12px;
+      width: 12px;
+    }
+
+    .table-wrap::-webkit-scrollbar-track {
+      background:
+        linear-gradient(120deg, rgba(19, 20, 48, 0.92), rgba(14, 16, 40, 0.98));
+      border-radius: 999px;
+      box-shadow: inset 0 0 0 1px rgba(128, 143, 255, 0.22);
+    }
+
+    .table-wrap::-webkit-scrollbar-thumb {
+      background:
+        linear-gradient(120deg, rgba(124, 92, 255, 0.96), rgba(38, 215, 165, 0.95));
+      border-radius: 999px;
+      border: 1px solid rgba(224, 236, 255, 0.2);
+      box-shadow:
+        0 0 12px rgba(124, 92, 255, 0.45),
+        0 0 16px rgba(38, 215, 165, 0.26);
+    }
+
+    .table-wrap::-webkit-scrollbar-thumb:hover {
+      background:
+        linear-gradient(120deg, rgba(146, 118, 255, 1), rgba(76, 230, 184, 1));
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 560px;
+    }
+
+    th, td {
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      padding: 8px 10px;
+      text-align: left;
+      font-size: 0.9rem;
+      vertical-align: middle;
+    }
+
+    th {
+      background: rgba(124, 92, 255, 0.14);
+      color: #ecf2ff;
+      white-space: nowrap;
+    }
+
+    tr:hover td {
+      background: rgba(255, 255, 255, 0.03);
+    }
+
+    input, select {
+      width: 100%;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      background: rgba(3, 8, 22, 0.75);
+      color: var(--text);
+      padding: 7px 9px;
+      border-radius: 8px;
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+      font-size: 0.88rem;
+    }
+
+    input:focus, select:focus {
+      border-color: var(--secondary);
+      box-shadow: 0 0 0 3px rgba(53, 215, 255, 0.18);
+    }
+
+    .buttons {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 12px;
+    }
+
+    button {
+      border: 1px solid transparent;
+      color: white;
+      border-radius: 10px;
+      padding: 9px 14px;
+      font-weight: 600;
+      font-size: 0.88rem;
+      cursor: pointer;
+      transition: 0.18s ease;
+      background: linear-gradient(120deg, var(--primary), #5a7cff);
+      box-shadow: 0 0 18px rgba(124, 92, 255, 0.35);
+    }
+
+    button:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 0 26px rgba(124, 92, 255, 0.5);
+    }
+
+    .btn-secondary {
+      background: linear-gradient(120deg, #6d4eff, #8a63ff);
+      box-shadow: 0 0 16px rgba(124, 92, 255, 0.34);
+    }
+
+    .btn-danger {
+      background: linear-gradient(120deg, #0f6c52, #15946b);
+      box-shadow: 0 0 16px rgba(21, 148, 107, 0.34);
+    }
+
+    .btn-ghost {
+      background: rgba(255, 255, 255, 0.06);
+      border-color: rgba(255, 255, 255, 0.24);
+      box-shadow: none;
+    }
+
+    .main-actions {
+      margin-bottom: 16px;
+    }
+
+    .status {
+      margin: 0 0 12px;
+      padding: 10px 12px;
+      border-radius: 10px;
+      font-size: 0.9rem;
+      border: 1px solid rgba(255, 255, 255, 0.16);
+      background: rgba(255, 255, 255, 0.05);
+    }
+
+    .status.error {
+      border-color: rgba(255, 95, 143, 0.6);
+      color: #ffd7e4;
+    }
+
+    .status.success {
+      border-color: rgba(124, 245, 154, 0.65);
+      color: #cbffd9;
+    }
+
+    .section-title {
+      margin: 0 0 8px;
+      font-size: 1rem;
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    .footer-note {
+      margin-top: 18px;
+      color: var(--muted);
+      font-size: 0.82rem;
+    }
+
+    .manual-box {
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      border-radius: 12px;
+      padding: 12px;
+      background: rgba(7, 14, 34, 0.45);
+      margin-top: 10px;
+    }
+
+    .manual-box h3 {
+      margin: 0 0 8px;
+      font-size: 0.95rem;
+    }
+
+    .manual-item {
+      font-family: Consolas, "Courier New", monospace;
+      color: #d6f4ff;
+      line-height: 1.5;
+      font-size: 0.84rem;
+      margin: 0 0 8px;
+      word-break: break-word;
+    }
+
+    .manual-muted {
+      margin: 0;
+      color: var(--muted);
+      font-size: 0.86rem;
+      line-height: 1.45;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <section class="hero">
+      <h1>Sistem Pendukung Keputusan Metode SAW</h1>
+      <p>
+        Single-page SPK berbasis metode <strong>Simple Additive Weighting (SAW)</strong>.
+        Semua proses berjalan 100% di browser (client-side) tanpa backend/API:
+        input kriteria, alternatif, normalisasi benefit/cost, skor preferensi, ranking, dan export CSV.
+      </p>
+    </section>
+
+    <div class="grid">
+      <section class="card">
+        <h2>Criteria Input</h2>
+        <p class="hint">Isi kode, nama, tipe, dan bobot setiap kriteria. Total bobot harus = 1.</p>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th style="width: 90px;">Code</th>
+                <th>Name</th>
+                <th style="width: 120px;">Type</th>
+                <th style="width: 120px;">Weight</th>
+              </tr>
+            </thead>
+            <tbody id="criteriaRows"></tbody>
+          </table>
+        </div>
+        <div class="buttons">
+          <button id="addCriterionBtn" class="btn-secondary" type="button">+ Add Criterion</button>
+          <button id="removeCriterionBtn" class="btn-danger" type="button">- Remove Criterion</button>
+        </div>
+      </section>
+
+      <section class="card">
+        <h2>Alternative Input</h2>
+        <p class="hint">Setiap alternatif harus memiliki nilai numerik untuk semua kriteria.</p>
+        <div class="table-wrap">
+          <table>
+            <thead id="alternativeHead"></thead>
+            <tbody id="alternativeRows"></tbody>
+          </table>
+        </div>
+        <div class="buttons">
+          <button id="addAlternativeBtn" class="btn-secondary" type="button">+ Add Alternative</button>
+          <button id="removeAlternativeBtn" class="btn-danger" type="button">- Remove Alternative</button>
+        </div>
+      </section>
+    </div>
+
+    <section class="card main-actions">
+      <h2 class="section-title">Action Panel</h2>
+      <p id="statusMessage" class="status">Ready. Masukkan data lalu klik <strong>Run SAW / Calculate</strong>.</p>
+      <div class="buttons">
+        <button id="runBtn" type="button">Run SAW / Calculate</button>
+        <button id="resetBtn" class="btn-danger" type="button">Reset All</button>
+        <button id="demoBtn" class="btn-secondary" type="button">Load Demo</button>
+        <button id="exportBtn" class="btn-ghost" type="button">Export CSV</button>
+        <button id="toggleDetailsBtn" class="btn-ghost" type="button">Toggle Details</button>
+      </div>
+    </section>
+
+    <section class="card" id="normalizationSection">
+      <h2 class="section-title">Normalization Matrix (rᵢⱼ)</h2>
+      <div class="table-wrap">
+        <table>
+          <thead id="normalizationHead"></thead>
+          <tbody id="normalizationBody"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="card" style="margin-top: 16px;">
+      <h2 class="section-title">Ranking Result</h2>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th style="width: 75px;">Rank</th>
+              <th style="width: 90px;">Code</th>
+              <th>Name</th>
+              <th style="width: 140px;">SAW Score</th>
+            </tr>
+          </thead>
+          <tbody id="rankingBody"></tbody>
+        </table>
+      </div>
+      <p class="footer-note">Alternatif dengan skor SAW tertinggi menjadi rekomendasi utama.</p>
+    </section>
+
+    <section class="card" style="margin-top: 16px;">
+      <h2 class="section-title">Manual Vi Explanation</h2>
+      <p class="hint">
+        Rumus dasar: <strong>Vᵢ = Σ(wⱼ × rᵢⱼ)</strong>. Bagian ini membantu user melihat kenapa skor akhir muncul.
+      </p>
+
+      <div class="manual-box">
+        <h3>1) Perhitungan Manual Dari Data Saat Ini</h3>
+        <p class="manual-muted">Jalankan SAW dulu, lalu detail perkalian bobot × normalisasi akan tampil di sini.</p>
+        <div id="manualCalcBody" style="margin-top: 8px;"></div>
+      </div>
+
+      <div class="manual-box">
+        <h3>2) Contoh Referensi (07.md)</h3>
+        <p class="manual-item">V1 = (0.6x0.67) + (0.8x0.5) + (0.6x0.8) + (0.8x0.75) + (1x0.8) + (0.8x0.8) + (1x1) = 4.32</p>
+        <p class="manual-item">V2 = (0.6x0.67) + (0.8x1) + (0.6x1) + (0.8x0.75) + (1x0.8) + (0.8x0.8) + (1x0.8) = 4.64</p>
+        <p class="manual-item">V3 = (0.6x1) + (0.8x1) + (0.6x0.6) + (0.8x1) + (1x0.8) + (0.8x0.8) + (1x1) = 5.00</p>
+        <p class="manual-item">V4 = (0.6x1) + (0.8x0.5) + (0.6x1) + (0.8x0.5) + (1x0.6) + (0.8x0.8) + (1x0.8) = 4.04</p>
+        <p class="manual-item">V5 = (0.6x0.67) + (0.8x1) + (0.6x0.8) + (0.8x1) + (1x0.8) + (0.8x0.8) + (1x1) = 4.92</p>
+        <p class="manual-item">V6 = (0.6x1) + (0.8x0.5) + (0.6x0.4) + (0.8x0.75) + (1x0.8) + (0.8x0.8) + (1x1) = 4.28</p>
+        <p class="manual-item">V7 = (0.6x0.67) + (0.8x0.5) + (0.6x0.6) + (0.8x1) + (1x1) + (0.8x1) + (1x1) = 4.76</p>
+        <p class="manual-muted" style="margin-bottom: 8px;">
+          Kesimpulan contoh referensi: <strong>A3</strong> terbaik (V3 = 5.00), lalu A5, A7, A2, A1, A6, A4.
+        </p>
+        <p class="manual-muted">
+          Catatan: contoh referensi ini memakai bobot mentah (tidak dinormalisasi ke total 1), sehingga skor bisa lebih dari 1.
+        </p>
+      </div>
+    </section>
+  </div>
+
+  <script type="module" src="./main.js"></script>
+</body>
+</html>
